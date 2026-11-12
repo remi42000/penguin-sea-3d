@@ -1,0 +1,14 @@
+{
+  "name": "penguin-sea-3d",
+  "version": "1.0.0",
+  "description": "PenguDive: A 3D polar ocean adventure game with a swimming penguin and seals, built with Three.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build:setup": "bash ./build-linux-setup.sh"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  }
+}

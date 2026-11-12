@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PenguDive 1211261126</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/pengudive.svg" />
+  <link rel="stylesheet" href="./src/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <!-- Subtle underwater optical tint & caustic vignette -->
+  <div id="underwater-overlay"></div>
+
+  <!-- Floating score popups layer -->
+  <div id="popups-layer"></div>
+
+  <!-- Top HUD -->
+  <header id="hud-top" class="hud-hidden">
+    <div class="hud-card stats-card">
+      <div class="stat-block">
+        <span id="hud-version-label" class="stat-label">PENGUDIVE</span>
+        <span id="score-val" class="stat-value">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-block">
+        <span class="stat-label">FISH</span>
+        <span id="fish-val" class="stat-value">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-block">
+        <span class="stat-label">HEARTS</span>
+        <div id="hearts-row" class="hearts-row" aria-label="Health"></div>
+      </div>
+    </div>
+
+    <div class="hud-card meters-card">
+      <div class="meter-row">
+        <span class="meter-label">AIR</span>
+        <div class="meter-track">
+          <div id="oxygen-bar" class="meter-fill oxygen-fill"></div>
+        </div>
+      </div>
+      <div class="meter-row">
+        <span class="meter-label">DASH</span>
+        <div class="meter-track">
+          <div id="stamina-bar" class="meter-fill stamina-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-actions">
+      <div id="hud-pad-badge" class="hud-pad-pill" title="Xbox 360 Controller Status">
+        <span class="pad-dot"></span>
+        <span id="hud-pad-text">Pad Ready</span>
+      </div>
+      <button id="chill-btn" class="hud-btn" title="Toggle Chill Mode (Y / P)">
+        <span id="chill-label">Mode: Adventure</span>
+      </button>
+      <button id="mute-btn" class="hud-btn" title="Toggle Audio (Back / M)">
+        <span id="mute-label">Sound: On</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Low oxygen banner -->
+  <div id="breath-warning" class="breath-warning hidden">
+    Swim UP (<span class="xbtn xbtn-a">A</span> / Space) to the surface for air!
+  </div>
+
+  <!-- Bottom HUD: Controls Hint + Polar Radar -->
+  <footer id="hud-bottom" class="hud-hidden">
+    <div class="hud-card controls-strip">
+      <span><kbd>LS</kbd>/<kbd>WASD</kbd> Swim</span>
+      <span><span class="xbtn xbtn-a">A</span>/<kbd>Space</kbd> Surface &amp; Leap</span>
+      <span><span class="xbtn xbtn-b">B</span>/<kbd>LT</kbd>/<kbd>Shift</kbd> Dive</span>
+      <span><span class="xbtn xbtn-x">X</span>/<kbd>RT</kbd>/<kbd>E</kbd> Dash</span>
+      <span><kbd>RS</kbd> Orbit</span>
+      <span><span class="xbtn xbtn-y">Y</span> Mode</span>
+    </div>
+
+    <div class="hud-card radar-card">
+      <canvas id="radar-canvas" width="116" height="116"></canvas>
+      <div class="radar-caption">
+        <span id="depth-val">Depth: 1.2m</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Start / Title Overlay -->
+  <div id="start-overlay" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="top-badges">
+        <span class="badge-pill">3D POLAR OCEAN</span>
+        <span id="start-pad-pill" class="badge-pill pad-status-pill">🎮 Xbox Controller: Press A or START</span>
+      </div>
+      <h1 id="game-main-title">PenguDive 1211261126</h1>
+      <p class="subtitle">
+        Swim through crystal polar waters as an agile penguin! Catch shimmering fish, glide through bubble rings blown by playful harbor seals, hop onto floating ice floes to waddle &amp; rest, and outswim patrolling leopard seals.
+      </p>
+
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="dot dot-harbor"></span>
+          <div>
+            <strong>Spotted Harbor Seals</strong>
+            <small>Friendly! They do barrel rolls &amp; blow speed-boost bubble rings.</small>
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="dot dot-leopard"></span>
+          <div>
+            <strong>Leopard Seals</strong>
+            <small>Sleek deep-water patrollers — dash or hop onto ice floes to evade!</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-grid">
+        <div>
+          <span><kbd>LS</kbd> / <kbd>D-Pad</kbd> / <kbd>WASD</kbd></span>
+          <span>Swim &amp; Steer</span>
+        </div>
+        <div>
+          <span><span class="xbtn xbtn-a">A</span> / <kbd>RB</kbd> / <kbd>Space</kbd></span>
+          <span>Surface / Leap / Hop</span>
+        </div>
+        <div>
+          <span><span class="xbtn xbtn-b">B</span> / <kbd>LT</kbd> / <kbd>Shift</kbd></span>
+          <span>Dive Deeper</span>
+        </div>
+        <div>
+          <span><span class="xbtn xbtn-x">X</span> / <kbd>RT</kbd> / <kbd>E</kbd></span>
+          <span>Turbo Flipper Dash</span>
+        </div>
+        <div>
+          <span><kbd>RS</kbd> / <kbd>Right-Drag</kbd></span>
+          <span>Orbit Camera</span>
+        </div>
+        <div>
+          <span><span class="xbtn xbtn-y">Y</span> Mode · <kbd>Back</kbd> Mute</span>
+          <span>Quick Toggles</span>
+        </div>
+      </div>
+
+      <div class="start-buttons">
+        <button id="play-adventure-btn" class="primary-btn">
+          <span class="xbtn xbtn-a">A</span> Dive In (Adventure)
+        </button>
+        <button id="play-chill-btn" class="secondary-btn">
+          <span class="xbtn xbtn-y">Y</span> Chill Swim (All Seals Friendly)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over / Rest Overlay -->
+  <div id="gameover-overlay" class="modal-backdrop hidden">
+    <div class="modal-card compact-card">
+      <div class="badge-pill">BACK ON THE ICE</div>
+      <h2>Time for a Breather!</h2>
+      <p id="final-summary" class="subtitle">You scored 0 points and caught 0 fish.</p>
+      <div class="start-buttons">
+        <button id="restart-btn" class="primary-btn">
+          <span class="xbtn xbtn-a">A</span> Dive Back In
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
